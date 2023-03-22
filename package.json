@@ -1,0 +1,47 @@
+{
+  "name": "bunorm",
+  "version": "0.0.1",
+  "description": "Synchronous ORM lib for Bun:sqlite - easier db handling",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "orm",
+    "typescript",
+    "typescript-orm",
+    "sqlite",
+    "bun:sqlite",
+    "bun",
+    "bun.js",
+    "bun.sh"
+  ],
+  "tags": [
+    "orm",
+    "typescript",
+    "typescript-orm",
+    "sqlite",
+    "bun:sqlite",
+    "bun",
+    "bun.js",
+    "bun.sh"
+  ],
+  "author": "deadlinecode",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deadlinecode/BunORM.git"
+  },
+  "bugs": {
+    "url": "https://github.com/deadlinecode/BunORM/issues"
+  },
+  "license": "ISC",
+  "files": [
+    "lib/**/*"
+  ],
+  "devDependencies": {
+    "bun-types": "^0.5.7",
+    "typescript": "^5.0.2"
+  }
+}
