@@ -67,9 +67,9 @@ type SortOut<I, E> = Pick<I, {
 type Or<A, TA, B, TB> = A extends TA ? true : B extends TB ? true : false;
 interface _TableFunctions<TT extends Tables, T extends Tables[string]> {
     create: (cols: _Columns<TT, T, true>) => AddTableFx<T, _Columns<TT, T, true>>;
-    save: (cols: {
-        id?: number;
-    } & _Columns<TT, T, true>) => void;
+    save: (cols: _Columns<TT, T, true> | ({
+        id: number;
+    } & Partial<_Columns<TT, T, true>>)) => AddTableFx<T, AddColumnDefaults<_Columns<TT, T, true>>>[];
     delete: (opts: Partial<_Columns<TT, T, true>>) => void;
     find: <S extends (keyof T["columns"])[] | undefined, R extends Narrow<(keyof SortOut<T["columns"], {
         type: "REL";
