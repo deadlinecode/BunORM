@@ -179,12 +179,19 @@ db.tables[TableName].create({
 // Save a row in the database
 // Parameter can be a object containing the data or the result of the create function
 db.tables[TableName].save({
-  name: "admin",
+  username: "admin",
+});
+
+// Call save with id parameter to update
+// It also makes all properties partial/optional
+db.tables[TableName].save({
+  id: 1,
+  username: "newAdmin",
 });
 
 // Delete a row from the database based on the parameters
 db.tables.users.delete({
-  username: "admin",
+  username: "newAdmin",
 });
 ```
 

@@ -91,6 +91,11 @@ const onlyUsernameAdmins = db.tables.users.find({
 // everything except username and the default attributes (id, createdAt, updatedAt and functions) will be undefined
 onlyUsernameAdmins[0].username;
 
+db.tables.users.save({
+  id: 1,
+  username: "newAdmin",
+});
+
 db.tables.users.delete({
-  username: "admin",
+  username: "newAdmin",
 });
