@@ -130,8 +130,8 @@ Please! Please! Please! Please! Please use the dev branch when making changes an
 - [ ] Cleaning up the messy shit i call "code"
 - [ ] Adding support for multiple relation types (one-to-many, one-to-one, etc.)
 - [ ] Support relations both ways if one is set
-- [ ] `db.tables.[table].save` should return the saved entity
 - [ ] Bulk actions for everything
+- [x] `db.tables.[table].save` should return the saved or updated entity
 <br/>
 <br/>
 

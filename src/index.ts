@@ -166,7 +166,11 @@ type Or<A, TA, B, TB> = A extends TA ? true : B extends TB ? true : false;
 
 interface _TableFunctions<TT extends Tables, T extends Tables[string]> {
   create: (cols: _Columns<TT, T, true>) => AddTableFx<T, _Columns<TT, T, true>>;
-  save: (cols: { id?: number } & _Columns<TT, T, true>) => void;
+  save: (
+    cols:
+      | _Columns<TT, T, true>
+      | ({ id: number } & Partial<_Columns<TT, T, true>>)
+  ) => AddTableFx<T, AddColumnDefaults<_Columns<TT, T, true>>>[];
   delete: (opts: Partial<_Columns<TT, T, true>>) => void;
   find: <
     S extends (keyof T["columns"])[] | undefined,
@@ -354,41 +358,52 @@ export class BunORM<T extends Narrow<Tables>> {
             .filter(([_, v]) => typeof v !== "function")
             .map(([col, val]) => [
               col,
-              Table.columns[col].type === "JSON" ? JSON.stringify(val) : val,
+              !["id", "createdAt", "updatedAt"].includes(col) &&
+              Table.columns[col].type === "JSON"
+                ? JSON.stringify(val)
+                : val,
             ])
         );
-        cols.id &&
-        (
-          this.db
-            .query(`SELECT COUNT(*) AS count FROM ${table} WHERE id = $id;`)
-            .get({ $id: cols.id }) as any
-        ).count !== 0
-          ? this.db
-              .query(
-                `UPDATE ${table} SET ${Object.keys(cols)
-                  .filter((x) => x !== "id")
-                  .map((x, i) => `${x} = $S_${x}`)
-                  .join()} WHERE id = $id;`
-              )
-              .run(
-                Object.fromEntries([
-                  ...Object.entries(cols)
-                    .filter(([k]) => k !== "id")
-                    .map(([k, v]) => [`$S_${k}`, v]),
-                  ["$id", cols.id],
-                ])
-              )
-          : this.db
-              .query(
-                `INSERT INTO ${table} ` +
-                  (Object.keys(cols).length === 0
-                    ? "DEFAULT VALUES;"
-                    : `('${Object.keys(cols).join("','")}') VALUES (${arr(
-                        Object.keys(cols).length,
-                        (i) => `?${i}`
-                      ).join()});`)
-              )
-              .all(...(Object.values(cols) as any));
+        return executeGetMiddleware(
+          injectFx(
+            parseJSON(
+              (cols.id &&
+              (
+                this.db
+                  .query(
+                    `SELECT COUNT(*) AS count FROM ${table} WHERE id = $id;`
+                  )
+                  .get({ $id: cols.id }) as any
+              ).count !== 0
+                ? this.db
+                    .query(
+                      `UPDATE ${table} SET ${Object.keys(cols)
+                        .filter((x) => x !== "id")
+                        .map((x, i) => `${x} = $S_${x}`)
+                        .join()} WHERE id = $id RETURNING *;`
+                    )
+                    .all(
+                      Object.fromEntries([
+                        ...Object.entries(cols)
+                          .filter(([k]) => k !== "id")
+                          .map(([k, v]) => [`$S_${k}`, v]),
+                        ["$id", cols.id],
+                      ])
+                    )
+                : this.db
+                    .query(
+                      `INSERT INTO ${table} ` +
+                        (Object.keys(cols).length === 0
+                          ? "DEFAULT VALUES;"
+                          : `('${Object.keys(cols).join("','")}') VALUES (${arr(
+                              Object.keys(cols).length,
+                              (i) => `?${i}`
+                            ).join()}) RETURNING *;`)
+                    )
+                    .all(...(Object.values(cols) as any))) as any
+            )
+          )
+        );
       },
       delete: (opts) =>
         this.db
