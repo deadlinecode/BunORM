@@ -41,12 +41,12 @@ type AddTableFx<T extends Tables[string], X> = X & (T extends undefined ? {} : {
 type ExcludeProps<T, U> = Pick<T, Exclude<keyof T, keyof U>>;
 type _ColumnSortOut<T extends Tables[string]["columns"], K extends keyof T> = T[K] extends Column ? T[K]["nullable"] extends true ? K : undefined extends T[K]["default"] ? never : K : T[K]["nullable"] extends true ? K : never;
 type And<A, TA, B, TB> = A extends TA ? (B extends TB ? true : false) : false;
-type _Columns<TT extends Tables, T extends Tables[string], WORelations extends boolean = false> = {
-    [colName in keyof T["columns"] as _ColumnSortOut<T["columns"], colName>]?: And<WORelations, true, T["columns"][colName]["type"], "REL"> extends true ? number : T["columns"][colName] extends Column ? NormalizeDataType<T["columns"][colName]["type"], T["columns"][colName]> : T["columns"][colName] extends Relation ? _Columns<TT, TT[T["columns"][colName]["table"]]>[] : never;
+type _Columns<TT extends Tables, T extends Tables[string], WORelations extends boolean = true> = {
+    [colName in keyof T["columns"] as _ColumnSortOut<T["columns"], colName>]?: And<WORelations, true, T["columns"][colName]["type"], "REL"> extends true ? number : T["columns"][colName] extends Column ? NormalizeDataType<T["columns"][colName]["type"], T["columns"][colName]> : T["columns"][colName] extends Relation ? _Columns<TT, TT[T["columns"][colName]["table"]], false>[] : never;
 } & ExcludeProps<{
-    [colName in keyof T["columns"]]: And<WORelations, true, T["columns"][colName]["type"], "REL"> extends true ? number : T["columns"][colName] extends Column ? NormalizeDataType<T["columns"][colName]["type"], T["columns"][colName]> : T["columns"][colName] extends Relation ? _Columns<TT, TT[T["columns"][colName]["table"]]>[] : never;
+    [colName in keyof T["columns"]]: And<WORelations, true, T["columns"][colName]["type"], "REL"> extends true ? number : T["columns"][colName] extends Column ? NormalizeDataType<T["columns"][colName]["type"], T["columns"][colName]> : T["columns"][colName] extends Relation ? _Columns<TT, TT[T["columns"][colName]["table"]], false>[] : never;
 }, {
-    [colName in keyof T["columns"] as _ColumnSortOut<T["columns"], colName>]: And<WORelations, true, T["columns"][colName]["type"], "REL"> extends true ? number : T["columns"][colName] extends Column ? NormalizeDataType<T["columns"][colName]["type"], T["columns"][colName]> : T["columns"][colName] extends Relation ? _Columns<TT, TT[T["columns"][colName]["table"]]>[] : never;
+    [colName in keyof T["columns"] as _ColumnSortOut<T["columns"], colName>]: And<WORelations, true, T["columns"][colName]["type"], "REL"> extends true ? number : T["columns"][colName] extends Column ? NormalizeDataType<T["columns"][colName]["type"], T["columns"][colName]> : T["columns"][colName] extends Relation ? _Columns<TT, TT[T["columns"][colName]["table"]], false>[] : never;
 }>;
 export interface Table {
     columns: Columns;
@@ -66,15 +66,15 @@ type SortOut<I, E> = Pick<I, {
 }[keyof I]>;
 type Or<A, TA, B, TB> = A extends TA ? true : B extends TB ? true : false;
 interface _TableFunctions<TT extends Tables, T extends Tables[string]> {
-    create: (cols: _Columns<TT, T, true>) => AddTableFx<T, _Columns<TT, T, true>>;
-    save: (cols: _Columns<TT, T, true> | ({
+    create: (cols: _Columns<TT, T>) => AddTableFx<T, _Columns<TT, T>>;
+    save: (cols: _Columns<TT, T> | ({
         id: number;
-    } & Partial<_Columns<TT, T, true>>)) => AddTableFx<T, AddColumnDefaults<_Columns<TT, T, true>>>[];
-    delete: (opts: Partial<_Columns<TT, T, true>>) => void;
+    } & Partial<_Columns<TT, T>>)) => AddTableFx<T, AddColumnDefaults<_Columns<TT, T>>>[];
+    delete: (opts: Partial<_Columns<TT, T>>) => void;
     find: <S extends (keyof T["columns"])[] | undefined, R extends Narrow<(keyof SortOut<T["columns"], {
         type: "REL";
     }>)[] | undefined>>(opts?: {
-        where?: Partial<_Columns<TT, T, true>>;
+        where?: Partial<AddColumnDefaults<_Columns<TT, T>>>;
         select?: S;
         resolve?: R;
     }) => AddTableFx<T, AddColumnDefaults<Or<S, (keyof T["columns"])[], R, (keyof SortOut<T["columns"], {
@@ -82,9 +82,9 @@ interface _TableFunctions<TT extends Tables, T extends Tables[string]> {
     }>)[]> extends true ? {
         [colName in S extends (keyof T["columns"])[] ? keyof Pick<T["columns"], S[number]> : keyof T["columns"]]: T["columns"][colName] extends Column ? NormalizeDataType<T["columns"][colName]["type"], T["columns"][colName]> : T["columns"][colName] extends Relation ? R extends (keyof SortOut<T["columns"], {
             type: "REL";
-        }>)[] ? R[number] extends never ? number : colName extends R[number] ? _Columns<TT, TT[T["columns"][colName]["table"]]>[] : number : number : never;
-    } : _Columns<TT, T, true>>>[];
-    findBy: (opts: Partial<_Columns<TT, T>>) => AddTableFx<T, AddColumnDefaults<_Columns<TT, T, true>>>[];
+        }>)[] ? R[number] extends never ? number : colName extends R[number] ? _Columns<TT, TT[T["columns"][colName]["table"]], false>[] : number : number : never;
+    } : _Columns<TT, T>>>[];
+    findBy: (opts: Partial<AddColumnDefaults<_Columns<TT, T>>>) => AddTableFx<T, AddColumnDefaults<_Columns<TT, T>>>[];
 }
 type _Tables<T extends Tables> = {
     [tableName in keyof T]: _TableFunctions<T, T[tableName]>;
