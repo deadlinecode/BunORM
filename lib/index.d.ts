@@ -14,7 +14,9 @@ type RemoveFirstParam<T> = T extends (first: any, ...rest: infer P) => infer R ?
 export interface Relation {
     type: "REL";
     table: keyof Tables;
+    default?: string;
     nullable?: boolean;
+    unique?: boolean;
 }
 export interface Column {
     type: DataType;
