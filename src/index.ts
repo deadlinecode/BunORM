@@ -47,7 +47,9 @@ type RemoveFirstParam<T> = T extends (first: any, ...rest: infer P) => infer R
 export interface Relation {
   type: "REL";
   table: keyof Tables;
+  default?: string;
   nullable?: boolean;
+  unique?: boolean;
 }
 
 export interface Column {
@@ -231,11 +233,14 @@ export class BunORM<T extends Narrow<Tables>> {
       `CREATE TABLE IF NOT EXISTS ${table} ('id' INTEGER PRIMARY KEY AUTOINCREMENT,${Object.entries(
         opts.columns as Record<keyof Columns, Column>
       )
-        .filter(([_, opts]) => (opts.type as any) !== "REL")
         .map(([col, opts]) =>
           [
             `'${col}'`,
-            opts.type === "JSON" ? "TEXT" : opts.type,
+            opts.type === "JSON"
+              ? "TEXT"
+              : (opts.type as any) === "REL"
+              ? "INTEGER"
+              : opts.type,
             opts.default && `DEFAULT ${opts.default}`,
             opts.unique && "UNIQUE",
             !opts.nullable && "NOT NULL",
@@ -243,21 +248,7 @@ export class BunORM<T extends Narrow<Tables>> {
             .filter((x) => !!x)
             .join(" ")
         )
-        .join()}${
-        Object.entries(opts.columns as Record<keyof Columns, Relation>).filter(
-          ([_, opts]) => opts.type === "REL"
-        ).length
-          ? "," +
-            Object.entries(opts.columns as Record<keyof Columns, Relation>)
-              .filter(([_, opts]) => opts.type === "REL")
-              .map(([col, opts]) =>
-                [`'${col}' INTEGER`, !opts.nullable && "NOT NULL"]
-                  .filter((x) => !!x)
-                  .join(" ")
-              )
-              .join()
-          : ""
-      },'updatedAt' DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,'createdAt' DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL${
+        .join()},'updatedAt' DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,'createdAt' DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL${
         Object.entries(opts.columns as Record<keyof Columns, Relation>).filter(
           ([_, opts]) => opts.type === "REL"
         ).length
